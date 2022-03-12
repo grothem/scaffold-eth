@@ -3,7 +3,8 @@ import { ethers } from "ethers";
 import React from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Input } from "antd";
+import { Button, Card, Input } from "antd";
+import { NoDeprecatedCustomRule } from "graphql";
 
 /**
  * web3 props can be passed from '../App.jsx' into your local view component for use
@@ -12,8 +13,6 @@ import { Button, Input } from "antd";
  * @returns react component
  **/
 function Home({ tx, address, readContracts, writeContracts }) {
-  // you can also use hooks locally in your component of choice
-  // in this case, let's keep track of 'purpose' variable from our contract
   const myBalance = useContractReader(readContracts, "Notepad", "balanceOf", [address, 1]);
 
   const [notepad, setNotepad] = useState();
@@ -26,7 +25,8 @@ function Home({ tx, address, readContracts, writeContracts }) {
       if (tokenURI) {
         const decoded = Buffer.from(tokenURI.substring(29), "base64");
         const parsed = JSON.parse(decoded);
-        setNotepad(parsed.image);
+        console.log(parsed);
+        setNotepad(parsed);
       }
     };
 
@@ -40,11 +40,24 @@ function Home({ tx, address, readContracts, writeContracts }) {
     setNote("");
   };
 
+  let noteView = "";
+  if (notepad) {
+    noteView = (
+      <Card title={`${notepad.name} - ${notepad.description}`}>
+        <img src={notepad.image} />
+      </Card>
+    );
+  }
+
   return (
-    <div className="flex flex-col">
-      <Input style={{ width: "500px" }} value={note} onChange={e => setNote(e.target.value)} />
-      <Button onClick={onAddNote}>Add Note</Button>
-      <img src={notepad} />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ display: "flex", margin: "15px" }}>
+        <Input style={{ width: "250px" }} value={note} onChange={e => setNote(e.target.value)} />
+        <Button type="primary" onClick={onAddNote}>
+          Add Note
+        </Button>
+      </div>
+      {noteView}
     </div>
   );
 }
