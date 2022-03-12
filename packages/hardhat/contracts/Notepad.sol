@@ -12,6 +12,8 @@ contract Notepad is ERC1155, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
+    string private _note;
+
     constructor() public ERC1155("") {}
 
     function mintItem(address _to, uint256 _amount) public returns(uint256) {
@@ -22,12 +24,16 @@ contract Notepad is ERC1155, Ownable {
         return id;
     }
 
-    function generateSVGofTokenById(address owner, uint256 tokenId) internal pure returns (string memory) {
+    function addToNote(string memory add) public onlyOwner {
+        _note = string(abi.encodePacked(_note, add));
+    }
+
+    function generateSVGofTokenById(address owner, uint256 tokenId) public view returns (string memory) {
 
         string memory svg = string(abi.encodePacked(
         '<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">',
             '<text x="20" y="35" class="small">',
-            Strings.toString(tokenId),
+            _note,
             '</text>',
         '</svg>'
         ));
@@ -35,7 +41,7 @@ contract Notepad is ERC1155, Ownable {
         return svg;
     }
 
-    function tokenURI(address owner, uint256 tokenId) internal pure returns (string memory) {
+    function tokenURI(address owner, uint256 tokenId) public view returns (string memory) {
 
         string memory name = string(abi.encodePacked('Example SVG ', Strings.toString(tokenId)));
         string memory image = Base64.encode(bytes(generateSVGofTokenById(owner, tokenId)));
@@ -47,7 +53,7 @@ contract Notepad is ERC1155, Ownable {
                         '{"name": "Notepad #',
                         Strings.toString(tokenId),
                         '", "description": "A notepad on the blockchain.", "image": "data:image/svg+xml;base64,',
-                        Base64.encode(bytes(image)),
+                        image,
                         '"}'
                     )
                 )
