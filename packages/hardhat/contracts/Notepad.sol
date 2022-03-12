@@ -9,35 +9,26 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Notepad is ERC1155, Ownable {
 
+    uint256 public constant NOTEPAD = 0;
+    mapping(address => mapping(uint256 => string[])) public notes;
+
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    string[] private _note;
-
     constructor() public ERC1155("") {}
 
-    function mintItem(address _to, uint256 _amount) public returns(uint256) {
-        _tokenIds.increment();
+    function mintItem(address to) public returns(uint256) {
         uint256 id = _tokenIds.current();
-        _mint(_to, id, _amount, "");
+        notes[to][id] = [""];
+        _tokenIds.increment();
+        _mint(to, NOTEPAD, 1, "");
 
         return id;
     }
 
-    function addToNote(string memory add) public onlyOwner {
-        _note.push(add);
-    }
-
-    function generateSVGofTokenById(address owner, uint256 tokenId) public view returns (string memory) {
-        string memory svg = string(abi.encodePacked(
-        '<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">',
-            '<text x="20" y="35" class="small">',
-                noteAsSVGText(),
-            '</text>'
-        '</svg>'
-        ));
-
-        return svg;
+    function addToNote(uint256 tokenId, string memory add) public {
+        require(notes[msg.sender][tokenId].length > 0, "No note to add to");
+        notes[msg.sender][tokenId].push(add);
     }
 
     function tokenURI(address owner, uint256 tokenId) public view returns (string memory) {
@@ -60,13 +51,26 @@ contract Notepad is ERC1155, Ownable {
         return string(abi.encodePacked("data:application/json;base64,", json));
     }
 
-    function noteAsSVGText() public view returns (string memory) {
+    function generateSVGofTokenById(address owner, uint256 tokenId) public view returns (string memory) {
+        string memory svg = string(abi.encodePacked(
+        '<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">',
+            '<text x="20" y="35" class="small">',
+                noteAsSVGText(owner, tokenId),
+            '</text>'
+        '</svg>'
+        ));
+
+        return svg;
+    }
+
+    function noteAsSVGText(address owner, uint256 tokenId) public view returns (string memory) {
         string memory text = "";
-        for (uint256 i = 0; i < _note.length; i++) {
+        string[] memory note = notes[owner][tokenId];
+        for (uint256 i = 0; i < note.length; i++) {
             text = string(abi.encodePacked(
                 text,
                 '<tspan x="0" dy="1.2em">',
-                _note[i],
+                note[i],
                 '</tspan>'
             ));
         }
